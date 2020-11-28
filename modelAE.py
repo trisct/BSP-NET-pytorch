@@ -413,6 +413,7 @@ class BSP_AE(object):
                     point_coord = self.data_points[dxb,which_batch*self.point_batch_size:(which_batch+1)*self.point_batch_size]
                     point_value = self.data_values[dxb,which_batch*self.point_batch_size:(which_batch+1)*self.point_batch_size]
 
+                # Reading data and putting them to device
                 batch_voxels = torch.from_numpy(batch_voxels)
                 point_coord = torch.from_numpy(point_coord)
                 point_value = torch.from_numpy(point_value)
