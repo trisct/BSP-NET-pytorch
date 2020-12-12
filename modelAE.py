@@ -1,3 +1,7 @@
+import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
+
 import os
 import time
 import math
@@ -33,12 +37,20 @@ class generator(nn.Module):
         self.concave_layer_weights = nn.Parameter(concave_layer_weights)
         nn.init.normal_(self.convex_layer_weights, mean=0.0, std=0.02)
         nn.init.normal_(self.concave_layer_weights, mean=1e-5, std=0.02)
+        print('[HERE" In modelAE/generator.init] p_dim:', self.p_dim)
+        print('[HERE" In modelAE/generator.init] c_dim:', self.c_dim)
+        print('[HERE" In modelAE/generator.init] convex_layer_weights:', self.convex_layer_weights.shape)
+        print('[HERE" In modelAE/generator.init] concave_layer_weights:', self.concave_layer_weights.shape)
 
     def forward(self, points, plane_m, is_training=False):
         if self.phase==0:
+            print('[HERE" In modelAE/generator] phase = %d' % self.phase)
+            print('[HERE" In modelAE/generator] points.shape =', points.shape)
+            print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
             #level 1
             h1 = torch.matmul(points, plane_m)
             h1 = torch.clamp(h1, min=0)
+            print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
 
             #level 2
             h2 = torch.matmul(h1, self.convex_layer_weights)
@@ -48,29 +60,44 @@ class generator(nn.Module):
             h3 = torch.matmul(h2, self.concave_layer_weights)
             h3 = torch.clamp(h3, min=0, max=1)
 
+            print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
+            print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
+
             return h2,h3
         elif self.phase==1 or self.phase==2:
+            print('[HERE" In modelAE/generator] phase = %d' % self.phase)
+            print('[HERE" In modelAE/generator] points.shape =', points.shape)
+            print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
             #level 1
             h1 = torch.matmul(points, plane_m)
             h1 = torch.clamp(h1, min=0)
+            print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
 
             #level 2
             h2 = torch.matmul(h1, (self.convex_layer_weights>0.01).float())
 
             #level 3
             h3 = torch.min(h2, dim=2, keepdim=True)[0]
+            print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
+            print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
 
             return h2,h3
         elif self.phase==3:
+            print('[HERE" In modelAE/generator] phase = %d' % self.phase)
+            print('[HERE" In modelAE/generator] points.shape =', points.shape)
+            print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
             #level 1
             h1 = torch.matmul(points, plane_m)
             h1 = torch.clamp(h1, min=0)
+            print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
 
             #level 2
             h2 = torch.matmul(h1, self.convex_layer_weights)
 
             #level 3
             h3 = torch.min(h2, dim=2, keepdim=True)[0]
+            print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
+            print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
 
             return h2,h3
         else:
@@ -98,7 +125,10 @@ class encoder(nn.Module):
         nn.init.xavier_uniform_(self.conv_5.weight)
         nn.init.constant_(self.conv_5.bias,0)
 
+        #print('[HERE" In modelAE/encoder.init] ef_dim:', self.ef_dim)
+        
     def forward(self, inputs, is_training=False):
+        print('[HERE" In modelAE/encoder] input shape:', inputs.shape)
         d_1 = self.conv_1(inputs)
         d_1 = F.leaky_relu(d_1, negative_slope=0.01, inplace=True)
 
@@ -115,6 +145,7 @@ class encoder(nn.Module):
         d_5 = d_5.view(-1, self.ef_dim*8)
         d_5 = torch.sigmoid(d_5)
 
+        print('[HERE" In modelAE/encoder] output shape:', d_5.shape)
         return d_5
 
 class decoder(nn.Module):
@@ -134,8 +165,11 @@ class decoder(nn.Module):
         nn.init.constant_(self.linear_3.bias,0)
         nn.init.xavier_uniform_(self.linear_4.weight)
         nn.init.constant_(self.linear_4.bias,0)
+        print('[HERE" In modelAE/decoder.init] ef_dim = %d' % self.ef_dim)
+        print('[HERE" In modelAE/decoder.init] p_dim = %d' % self.p_dim)
 
     def forward(self, inputs, is_training=False):
+        print('[HERE" In modelAE/decoder] input shape:', inputs.shape)
         l1 = self.linear_1(inputs)
         l1 = F.leaky_relu(l1, negative_slope=0.01, inplace=True)
 
@@ -147,6 +181,8 @@ class decoder(nn.Module):
 
         l4 = self.linear_4(l3)
         l4 = l4.view(-1, 4, self.p_dim)
+
+        print('[HERE" In modelAE/decoder] output shape:', l4.shape)
 
         return l4
 
@@ -201,7 +237,7 @@ class BSP_AE(object):
             self.load_point_batch_size = 16*16*16
         elif self.sample_vox_size==64:
             self.load_point_batch_size = 16*16*16*4
-        self.shape_batch_size = 24
+        self.shape_batch_size = config.shape_batch_size
         self.point_batch_size = 16*16*16
         self.input_size = 64 #input voxel grid size
 
@@ -218,44 +254,63 @@ class BSP_AE(object):
         
         data_hdf5_name = self.data_dir+'/'+self.dataset_load+'.hdf5'
 
-        print('here: dataset checkpoint config loaded:')
-        print('| dataset_name: %s'%self.dataset_name)
-        print('| dataset_load: %s'%self.dataset_load)
-        print('| checkpoint_dir: %s'%self.checkpoint_dir)
-        print('| data_dir: %s'%self.data_dir)
-        print('| data_hdf5_name: %s'%data_hdf5_name)
+        print('[HERE: In modelAE/BSP_AE] -----dataset checkpoint config display----')
+        print('[HERE: In modelAE/BSP_AE] dataset_name: %s'%self.dataset_name)
+        print('[HERE: In modelAE/BSP_AE] dataset_load: %s'%self.dataset_load)
+        print('[HERE: In modelAE/BSP_AE] checkpoint_dir: %s'%self.checkpoint_dir)
+        print('[HERE: In modelAE/BSP_AE] data_dir: %s'%self.data_dir)
+        print('[HERE: In modelAE/BSP_AE] data_hdf5_name: %s'%data_hdf5_name)
 
+        print('[HERE: In modelAE/BSP_AE] -----dataset loading process----')
         if os.path.exists(data_hdf5_name):
-            print('here: data reading starts')
+            print('[HERE: In modelAE/BSP_AE] data loading starts')
             data_dict = h5py.File(data_hdf5_name, 'r')
-            print('here: data reading done')
+            print('[HERE: In modelAE/BSP_AE] data loading done')
+            print('[HERE: In modelAE/BSP_AE] data_dict keys:', data_dict.keys())
 
-            print('here: data preprocessing starts')
-            print('here: data_points normalization starts')
+            print('[HERE: In modelAE/BSP_AE] data preprocessing starts')
+            print('[HERE: In modelAE/BSP_AE] data_points normalization starts')
             self.data_points = (data_dict['points_'+str(self.sample_vox_size)][:].astype(np.float32)+0.5)/256-0.5
-            print('here: data_points normalization done')
-            print('here: data_points concatenation starts')
+            print('[HERE: In modelAE/BSP_AE] data_points normalization done')
+            print('[HERE: In modelAE/BSP_AE] data_dict[\'points_%s\'] info:' % str(self.sample_vox_size))
+            print('[HERE: In modelAE/BSP_AE] | type:', type(self.data_points))
+            print('[HERE: In modelAE/BSP_AE] | shape:', self.data_points.shape)
+            
+            print('[HERE: In modelAE/BSP_AE] data_points concatenation starts. This turns to homogenous coordinates.')
             self.data_points = np.concatenate([self.data_points, np.ones([len(self.data_points),self.load_point_batch_size,1],np.float32) ],axis=2)
-            print('here: data_points concatenation done')
-            print('here: data_values retype starts')
+            print('[HERE: In modelAE/BSP_AE] data_points concatenation done')
+            print('[HERE: In modelAE/BSP_AE] data_points concatenated info:')
+            print('[HERE: In modelAE/BSP_AE] | type:', type(self.data_points))
+            print('[HERE: In modelAE/BSP_AE] | shape:', self.data_points.shape)
+            
+            print('[HERE: In modelAE/BSP_AE] data_values retyping starts')
             self.data_values = data_dict['values_'+str(self.sample_vox_size)][:].astype(np.float32)
-            print('here: data_values retype done')
-            print('here: data_voxels load starts')
-            print('| data_dict[\'voxels\'] info:')
-            print('| type: ', type(data_dict['voxels']))
-            print('| shape: ', data_dict['voxels'].shape)
-            self.data_voxels = data_dict['voxels'][:] # [:] at the end means to turn the hdf5 data format to numpy arrays.
-            print('| self.data_voxels info:')
-            print('| type: ', type(self.data_voxels))
-            print('| shape: ', self.data_voxels.shape)
-            print('here: data_voxels load done')
+            print('[HERE: In modelAE/BSP_AE] data_values retyping done')
+            print('[HERE: In modelAE/BSP_AE] data_values info:')
+            print('[HERE: In modelAE/BSP_AE] | type:', type(self.data_values))
+            print('[HERE: In modelAE/BSP_AE] | shape:', self.data_values.shape)
+            
+            print('[HERE: In modelAE/BSP_AE] data_voxels load starts')
+            print('[HERE: In modelAE/BSP_AE] data_dict[\'voxels\'] info:')
+            print('[HERE: In modelAE/BSP_AE] | type: ', type(data_dict['voxels']))
+            print('[HERE: In modelAE/BSP_AE] | shape: ', data_dict['voxels'].shape)
+            print('[HERE: In modelAE/BSP_AE] changing dataset voxels from h5py dataset to numpy array. this could take a while.')
+            self.data_voxels = np.array(data_dict['voxels']) # [:] at the end means to turn the hdf5 data format to numpy arrays.
+            print('[HERE: In modelAE/BSP_AE] dataset voxels are now numpy array.')
+            print('[HERE: In modelAE/BSP_AE] self.data_voxels info:')
+            print('[HERE: In modelAE/BSP_AE] | type: ', type(self.data_voxels))
+            print('[HERE: In modelAE/BSP_AE] | shape: ', self.data_voxels.shape)
+            print('[HERE: In modelAE/BSP_AE] data_voxels load done')
             #reshape to NCHW
-            print('here: data_voxels reshaping starts')
+            print('[HERE: In modelAE/BSP_AE] data_voxels reshaping starts')
             self.data_voxels = np.reshape(self.data_voxels, [-1,1,self.input_size,self.input_size,self.input_size])
-            print('here: data_voxels reshaping done')
-            print('here: data preprocessing done')
+            print('[HERE: In modelAE/BSP_AE] data_voxels reshaping done')
+            print('[HERE: In modelAE/BSP_AE] self.data_voxels reshaped info:')
+            print('[HERE: In modelAE/BSP_AE] | type: ', type(self.data_voxels))
+            print('[HERE: In modelAE/BSP_AE] | shape: ', self.data_voxels.shape)
+            print('[HERE: In modelAE/BSP_AE] data preprocessing done')
         else:
-            print("error: cannot load "+data_hdf5_name)
+            print("error: cannot load " + data_hdf5_name)
             exit(0)
         
         self.real_size = 64 #output point-value voxel grid size in testing
@@ -263,7 +318,8 @@ class BSP_AE(object):
         test_point_batch_size = self.test_size*self.test_size*self.test_size #do not change
         
         #get coords
-        print('here: coords building starts')
+        print('[HERE: In modelAE/BSP_AE] coords building starts')
+        
 
         dima = self.test_size
         dim = self.real_size
@@ -291,7 +347,12 @@ class BSP_AE(object):
         self.coords = np.reshape(self.coords,[multiplier3,test_point_batch_size,3])
         self.coords = np.concatenate([self.coords, np.ones([multiplier3,test_point_batch_size,1],np.float32) ],axis=2)
         self.coords = torch.from_numpy(self.coords)
-        print('here: coords tensor build complete.')
+
+        print('[HERE: In modelAE/BSP_AE] some coords related parameters:')
+        print('[HERE: In modelAE/BSP_AE] | dima = %d, dim = %d' % (dima, dim))
+        print('[HERE: In modelAE/BSP_AE] | self.coords shape =', self.coords.shape)
+        
+        print('[HERE: In modelAE/BSP_AE] coords tensor build complete.')
 
         if torch.cuda.is_available():
             self.device = torch.device('cuda')
@@ -314,7 +375,7 @@ class BSP_AE(object):
         self.checkpoint_name='BSP_AE.model'
         self.checkpoint_manager_list = [None] * self.max_to_keep
         self.checkpoint_manager_pointer = 0
-        print('here: model building done.')
+        print('[HERE: In modelAE/BSP_AE] model building done.')
         
         #loss
         if config.phase==0:
@@ -359,14 +420,14 @@ class BSP_AE(object):
                 return loss_sp,loss
             self.loss = network_loss
         
-        print('here: BSP_AE init end.')
+        print('[HERE: In modelAE/BSP_AE] BSP_AE init end.')
 
     @property
     def model_dir(self):
         return "{}_ae_{}".format(self.dataset_name, self.input_size)
 
     def train(self, config):
-        print('HERE: BSP_AE.train is called.')
+        print('[HERE: In modelAE/BSP_AE.train] BSP_AE.train is called.')
         #load previous checkpoint
         checkpoint_txt = os.path.join(self.checkpoint_path, "checkpoint")
         if os.path.exists(checkpoint_txt):
@@ -385,6 +446,8 @@ class BSP_AE(object):
         print("training samples   ", shape_num)
         print("batch size         ", self.shape_batch_size)
         print("batch num          ", int(shape_num/self.shape_batch_size))
+        print("load_point_bs      ", self.load_point_batch_size)
+        print("point_batch_size   ", self.point_batch_size)
         print("point batch num    ", int(self.load_point_batch_size/self.point_batch_size))
         print("config epoch       ", config.epoch)
         print("training_epoch     ", config.epoch + int(config.iteration/shape_num))
@@ -404,23 +467,42 @@ class BSP_AE(object):
             avg_num = 0
             for idx in range(batch_num):
                 dxb = batch_index_list[idx*self.shape_batch_size:(idx+1)*self.shape_batch_size]
+                print('[HERE: In modelAE/BSP_AE.train] dxb shape =', dxb.shape)
+                
                 batch_voxels = self.data_voxels[dxb].astype(np.float32)
+                print('[HERE: In modelAE/BSP_AE.train] batch_voxels shape =', batch_voxels.shape)
+                #print(batch_voxels[0])
+
+                voxels = batch_voxels[0,0]
+
+                colors = np.empty(voxels.shape, dtype=object)
+                colors = 'blue'
+                
+                fig = plt.figure()
+                ax = fig.gca(projection='3d')
+                ax.voxels(voxels, facecolors=colors, edgecolor='k')
+
+                plt.show()
+                fig.clear()
+
                 if point_batch_num==1:
                     point_coord = self.data_points[dxb]
                     point_value = self.data_values[dxb]
+                    
                 else:
                     which_batch = np.random.randint(point_batch_num)
-                    point_coord = self.data_points[dxb,which_batch*self.point_batch_size:(which_batch+1)*self.point_batch_size]
-                    point_value = self.data_values[dxb,which_batch*self.point_batch_size:(which_batch+1)*self.point_batch_size]
+                    point_coord = self.data_points[dxb, which_batch*self.point_batch_size:(which_batch+1)*self.point_batch_size]
+                    point_value = self.data_values[dxb, which_batch*self.point_batch_size:(which_batch+1)*self.point_batch_size]
+
+                print(point_coord)
+                print('[HERE: In modelAE/BSP_AE.train] point_batch_num = %d' % point_batch_num)
+                print('[HERE: In modelAE/BSP_AE.train] point_coord shape =', point_coord.shape)
+                print('[HERE: In modelAE/BSP_AE.train] point_value shape =', point_value.shape)
 
                 # Reading data and putting them to device
-                batch_voxels = torch.from_numpy(batch_voxels)
-                point_coord = torch.from_numpy(point_coord)
-                point_value = torch.from_numpy(point_value)
-
-                batch_voxels = batch_voxels.to(self.device)
-                point_coord = point_coord.to(self.device)
-                point_value = point_value.to(self.device)
+                batch_voxels = torch.from_numpy(batch_voxels).to(self.device)
+                point_coord = torch.from_numpy(point_coord).to(self.device)
+                point_value = torch.from_numpy(point_value).to(self.device)
 
                 self.bsp_network.zero_grad()
                 _, _, net_out_convexes, net_out = self.bsp_network(batch_voxels, None, None, point_coord, is_training=True)

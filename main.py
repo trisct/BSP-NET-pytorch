@@ -31,6 +31,9 @@ parser.add_argument("--end", action="store", dest="end", default=16, type=int, h
 parser.add_argument("--ae", action="store_true", dest="ae", default=False, help="True for ae [False]")
 parser.add_argument("--svr", action="store_true", dest="svr", default=False, help="True for svr [False]")
 parser.add_argument("--getz", action="store_true", dest="getz", default=False, help="True for getting latent codes [False]")
+
+parser.add_argument("--shape_batch_size", type=int, default=24, help="")
+
 FLAGS = parser.parse_args()
 
 

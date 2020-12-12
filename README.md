@@ -76,7 +76,7 @@ If you fail to build the module, you can replace *"from bspt import ..."* with *
 
 Please use the provided scripts *train_ae.sh*, *train_svr.sh*, *test_ae.sh*, *test_svr.sh* to train the network on the training set and get output meshes for the testing set.
 
-To train an autoencoder, use the following commands for progressive training. 
+To train an autoencoder, use the following commands for progressive training.
 ```
 python main.py --ae --train --phase 0 --iteration 8000000 --sample_dir samples/all_vox256_img0_16 --sample_vox_size 16
 python main.py --ae --train --phase 0 --iteration 8000000 --sample_dir samples/all_vox256_img0_32 --sample_vox_size 32
