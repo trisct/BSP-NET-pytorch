@@ -110,8 +110,11 @@ class img_encoder(nn.Module):
 		nn.init.constant_(self.linear_3.bias,0)
 		nn.init.xavier_uniform_(self.linear_4.weight)
 		nn.init.constant_(self.linear_4.bias,0)
+		print('[HERE: In modelSVR/img_encoder.init] img_ef_dim = %d, z_dim = %d' % (self.img_ef_dim, self.z_dim))
 
 	def forward(self, view, is_training=False):
+		print('[HERE: In modelSVR/img_encoder.forward] view.shape:', view.shape)
+
 		layer_0 = self.conv_0(1-view)
 		layer_0 = F.leaky_relu(layer_0, negative_slope=0.01, inplace=True)
 
@@ -134,6 +137,8 @@ class img_encoder(nn.Module):
 		layer_10 = layer_10.view(-1,self.img_ef_dim*16)
 		layer_10 = F.leaky_relu(layer_10, negative_slope=0.01, inplace=True)
 
+		print('[HERE: In modelSVR/img_encoder.forward] resnet_feat.shape:', layer_10.shape)
+
 		l1 = self.linear_1(layer_10)
 		l1 = F.leaky_relu(l1, negative_slope=0.01, inplace=True)
 
@@ -145,6 +150,8 @@ class img_encoder(nn.Module):
 
 		l4 = self.linear_4(l3)
 		l4 = torch.sigmoid(l4)
+
+		print('[HERE: In modelSVR/img_encoder.forward] latent_code.shape:', l4.shape)
 
 		return l4
 
@@ -165,8 +172,12 @@ class decoder(nn.Module):
 		nn.init.constant_(self.linear_3.bias,0)
 		nn.init.xavier_uniform_(self.linear_4.weight)
 		nn.init.constant_(self.linear_4.bias,0)
+		print('[HERE: In modelSVR/decoder.init] ef_dim.shape:', ef_dim.shape)
+		print('[HERE: In modelSVR/decoder.init] p_dim.shape:', p_dim.shape)
 
 	def forward(self, inputs, is_training=False):
+		print('[HERE: In modelSVR/decoder.forward] inputs.shape:', inputs.shape)
+
 		l1 = self.linear_1(inputs)
 		l1 = F.leaky_relu(l1, negative_slope=0.01, inplace=True)
 
@@ -178,6 +189,7 @@ class decoder(nn.Module):
 
 		l4 = self.linear_4(l3)
 		l4 = l4.view(-1, 4, self.p_dim)
+		print('[HERE: In modelSVR/decoder.forward] l4.shape:', l4.shape)
 
 		return l4
 
