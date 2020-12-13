@@ -172,8 +172,8 @@ class decoder(nn.Module):
 		nn.init.constant_(self.linear_3.bias,0)
 		nn.init.xavier_uniform_(self.linear_4.weight)
 		nn.init.constant_(self.linear_4.bias,0)
-		print('[HERE: In modelSVR/decoder.init] ef_dim.shape:', ef_dim.shape)
-		print('[HERE: In modelSVR/decoder.init] p_dim.shape:', p_dim.shape)
+		print('[HERE: In modelSVR/decoder.init] ef_dim:', ef_dim)
+		print('[HERE: In modelSVR/decoder.init] p_dim:', p_dim)
 
 	def forward(self, inputs, is_training=False):
 		print('[HERE: In modelSVR/decoder.forward] inputs.shape:', inputs.shape)
