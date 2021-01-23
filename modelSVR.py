@@ -5,6 +5,8 @@ import random
 import numpy as np
 import h5py
 
+import matplotlib.pyplot as plt
+
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
@@ -111,9 +113,15 @@ class img_encoder(nn.Module):
 		nn.init.xavier_uniform_(self.linear_4.weight)
 		nn.init.constant_(self.linear_4.bias,0)
 		print('[HERE: In modelSVR/img_encoder.init] img_ef_dim = %d, z_dim = %d' % (self.img_ef_dim, self.z_dim))
+		self.n = 0
 
 	def forward(self, view, is_training=False):
 		print('[HERE: In modelSVR/img_encoder.forward] view.shape:', view.shape)
+		plt.imshow((view)[0].expand(3,-1,-1).transpose(0,1).transpose(1,2).cpu().detach())
+		plt.savefig("samples/all_vox256_img3/%d.png"%self.n)
+		print(view.max(),view.min())
+		self.n += 1
+		plt.clf()
 
 		layer_0 = self.conv_0(1-view)
 		layer_0 = F.leaky_relu(layer_0, negative_slope=0.01, inplace=True)
@@ -206,6 +214,7 @@ class bsp_network(nn.Module):
 		self.generator = generator(self.p_dim, self.c_dim)
 
 	def forward(self, inputs, z_vector, plane_m, point_coord, is_training=False):
+		
 		if is_training:
 			z_vector = self.img_encoder(inputs, is_training=is_training)
 			plane_m = None
@@ -466,6 +475,7 @@ class BSP_SVR(object):
 		batch_view = self.data_pixels[t:t+1,self.test_idx].astype(np.float32)/255.0
 		batch_view = torch.from_numpy(batch_view)
 		batch_view = batch_view.to(self.device)
+		
 		_, out_m, _,_ = self.bsp_network(batch_view, None, None, None, is_training=False)
 		for i in range(multiplier):
 			for j in range(multiplier):
