@@ -268,6 +268,19 @@ class BSP_AE(object):
             print('[HERE: In modelAE/BSP_AE] data loading done')
             print('[HERE: In modelAE/BSP_AE] data_dict keys:', data_dict.keys())
 
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'pixels\']:', data_dict['pixels'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'points_16\']:', data_dict['points_16'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'points_32\']:', data_dict['points_32'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'points_64\']:', data_dict['points_64'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'values_16\']:', data_dict['values_16'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'values_32\']:', data_dict['values_32'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'values_64\']:', data_dict['values_64'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'voxels\']:', data_dict['voxels'])
+
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'points_16\']:', np.array(data_dict['pixels']))
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'values_16\']:', np.array(data_dict['pixels']))
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'voxels\']:', np.array(data_dict['voxels']))
+
             print('[HERE: In modelAE/BSP_AE] data preprocessing starts')
             print('[HERE: In modelAE/BSP_AE] data_points normalization starts')
             self.data_points = (data_dict['points_'+str(self.sample_vox_size)][:].astype(np.float32)+0.5)/256-0.5
@@ -275,6 +288,8 @@ class BSP_AE(object):
             print('[HERE: In modelAE/BSP_AE] data_dict[\'points_%s\'] info:' % str(self.sample_vox_size))
             print('[HERE: In modelAE/BSP_AE] | type:', type(self.data_points))
             print('[HERE: In modelAE/BSP_AE] | shape:', self.data_points.shape)
+            print('[HERE: In modelAE/BSP_AE] | content', self.data_points)
+
             
             print('[HERE: In modelAE/BSP_AE] data_points concatenation starts. This turns to homogenous coordinates.')
             self.data_points = np.concatenate([self.data_points, np.ones([len(self.data_points),self.load_point_batch_size,1],np.float32) ],axis=2)
@@ -289,7 +304,8 @@ class BSP_AE(object):
             print('[HERE: In modelAE/BSP_AE] data_values info:')
             print('[HERE: In modelAE/BSP_AE] | type:', type(self.data_values))
             print('[HERE: In modelAE/BSP_AE] | shape:', self.data_values.shape)
-            
+            print('[HERE: In modelAE.BSP_AE] | content:', self.data_values)
+
             print('[HERE: In modelAE/BSP_AE] data_voxels load starts')
             print('[HERE: In modelAE/BSP_AE] data_dict[\'voxels\'] info:')
             print('[HERE: In modelAE/BSP_AE] | type: ', type(data_dict['voxels']))
