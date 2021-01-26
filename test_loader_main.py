@@ -12,6 +12,8 @@ from modelSVR import BSP_SVR
 import argparse
 import h5py
 
+import trimesh
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--phase", action="store", dest="phase", default=1, type=int, help="phase 0 = continuous, phase 1 = hard discrete, phase 2 = hard discrete with L_overlap, phase 3 = soft discrete [1]")
 #phase 0 continuous for better convergence
@@ -47,3 +49,52 @@ if not os.path.exists(FLAGS.sample_dir):
 
 bsp_ae = BSP_AE_Loader(FLAGS)
 
+
+item_index = 16
+
+points_ori = bsp_ae.data_points_ori[item_index]
+in_points_idx = (bsp_ae.data_values[item_index] == 1.)
+out_points_idx = (bsp_ae.data_values[item_index] == 0.)
+
+voxel_raw = bsp_ae.data_voxels[item_index,0]
+voxel = trimesh.voxel.VoxelGrid(voxel_raw)
+mesh = voxel.marching_cubes
+
+
+print('[HERE: In test_loader_main] Samples inside original mesh = %d/%d' % ((in_points_idx==True).sum(), in_points_idx.shape[0]))
+in_points_idx_by_mcmesh = mesh.contains((points_ori.astype(np.float32) + .5)/4. - .5)
+print('[HERE: In test_loader_main] Samples inside MCubes mesh = %d/%d' % ((in_points_idx_by_mcmesh==True).sum(), points_ori.shape[0]))
+print('[HERE: In test_loader_main] Common samples inside mesh = %d/%d' % ((in_points_idx_by_mcmesh==in_points_idx[:,0]).sum(), in_points_idx_by_mcmesh.shape[0]))
+
+x_in = points_ori[:,0][in_points_idx[:,0]]
+y_in = points_ori[:,1][in_points_idx[:,0]]
+z_in = points_ori[:,2][in_points_idx[:,0]]
+
+x_out = points_ori[:,0][out_points_idx[:,0]]
+y_out = points_ori[:,1][out_points_idx[:,0]]
+z_out = points_ori[:,2][out_points_idx[:,0]]
+#out_points = points_ori[~in_points_idx]
+
+
+skip = 1   # Skip every n points
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+#point_range = range(0, points.shape[0], skip) # skip points to prevent crash
+ax.scatter(x_in,   # x
+           y_in,   # y
+           z_in,   # z
+           #c=points[point_range, 2], # height data for color
+           )
+#plt.show()
+
+fig.clf()
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(x_out,   # x
+           y_out,   # y
+           z_out,   # z
+           #c=points[point_range, 2], # height data for color
+           )
+#plt.show()
+#voxel.marching_cubes.show()

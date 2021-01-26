@@ -73,28 +73,28 @@ class BSP_AE_Loader(object):
         print('[HERE: In modelAE/BSP_AE] -----dataset loading process----')
         if os.path.exists(data_hdf5_name):
             print('[HERE: In modelAE/BSP_AE] data loading starts')
-            data_dict = h5py.File(data_hdf5_name, 'r')
+            self.data_dict = h5py.File(data_hdf5_name, 'r')
             print('[HERE: In modelAE/BSP_AE] data loading done')
-            print('[HERE: In modelAE/BSP_AE] data_dict keys:', data_dict.keys())
+            print('[HERE: In modelAE/BSP_AE] data_dict keys:', self.data_dict.keys())
 
-            print('[HERE: In modelAE.BSP_AR] data_dict[\'pixels\']:', data_dict['pixels'])
-            print('[HERE: In modelAE.BSP_AR] data_dict[\'points_16\']:', data_dict['points_16'])
-            print('[HERE: In modelAE.BSP_AR] data_dict[\'points_32\']:', data_dict['points_32'])
-            print('[HERE: In modelAE.BSP_AR] data_dict[\'points_64\']:', data_dict['points_64'])
-            print('[HERE: In modelAE.BSP_AR] data_dict[\'values_16\']:', data_dict['values_16'])
-            print('[HERE: In modelAE.BSP_AR] data_dict[\'values_32\']:', data_dict['values_32'])
-            print('[HERE: In modelAE.BSP_AR] data_dict[\'values_64\']:', data_dict['values_64'])
-            print('[HERE: In modelAE.BSP_AR] data_dict[\'voxels\']:', data_dict['voxels'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'pixels\']:', self.data_dict['pixels'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'points_16\']:', self.data_dict['points_16'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'points_32\']:', self.data_dict['points_32'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'points_64\']:', self.data_dict['points_64'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'values_16\']:', self.data_dict['values_16'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'values_32\']:', self.data_dict['values_32'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'values_64\']:', self.data_dict['values_64'])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'voxels\']:', self.data_dict['voxels'])
 
-            print('[HERE: In modelAE.BSP_AR] data_dict[\'points_16\']:', data_dict['points_16'][:])
-            print('[HERE: In modelAE.BSP_AR] data_dict[\'values_16\']:', np.array(data_dict['values_16']))
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'points_16\']:', self.data_dict['points_16'][:])
+            print('[HERE: In modelAE.BSP_AR] data_dict[\'values_16\']:', np.array(self.data_dict['values_16']))
             #print('[HERE: In modelAE.BSP_AR] data_dict[\'voxels\']:', np.array(data_dict['voxels']))
 
             print('[HERE: In modelAE/BSP_AE] data preprocessing starts')
             print('[HERE: In modelAE/BSP_AE] data_points normalization starts')
-            self.data_points_ori = data_dict['points_'+str(self.sample_vox_size)][:]
+            self.data_points_ori = self.data_dict['points_'+str(self.sample_vox_size)][:]
 
-            self.data_points = (data_dict['points_'+str(self.sample_vox_size)][:].astype(np.float32)+0.5)/256-0.5
+            self.data_points = (self.data_dict['points_'+str(self.sample_vox_size)][:].astype(np.float32)+0.5)/256-0.5
             print('[HERE: In modelAE/BSP_AE] data_points normalization done')
             print('[HERE: In modelAE/BSP_AE] data_dict[\'points_%s\'] info:' % str(self.sample_vox_size))
             print('[HERE: In modelAE/BSP_AE] | type:', type(self.data_points))
@@ -110,8 +110,8 @@ class BSP_AE_Loader(object):
             print('[HERE: In modelAE/BSP_AE] | shape:', self.data_points.shape)
             
             print('[HERE: In modelAE/BSP_AE] data_values retyping starts')
-            self.data_values_ori = data_dict['values_'+str(self.sample_vox_size)][:]
-            self.data_values = data_dict['values_'+str(self.sample_vox_size)][:].astype(np.float32)
+            self.data_values_ori = self.data_dict['values_'+str(self.sample_vox_size)][:]
+            self.data_values = self.data_dict['values_'+str(self.sample_vox_size)][:].astype(np.float32)
             print('[HERE: In modelAE/BSP_AE] data_values retyping done')
             print('[HERE: In modelAE/BSP_AE] data_values info:')
             print('[HERE: In modelAE/BSP_AE] | type:', type(self.data_values))
@@ -120,10 +120,10 @@ class BSP_AE_Loader(object):
 
             print('[HERE: In modelAE/BSP_AE] data_voxels load starts')
             print('[HERE: In modelAE/BSP_AE] data_dict[\'voxels\'] info:')
-            print('[HERE: In modelAE/BSP_AE] | type: ', type(data_dict['voxels']))
-            print('[HERE: In modelAE/BSP_AE] | shape: ', data_dict['voxels'].shape)
+            print('[HERE: In modelAE/BSP_AE] | type: ', type(self.data_dict['voxels']))
+            print('[HERE: In modelAE/BSP_AE] | shape: ', self.data_dict['voxels'].shape)
             print('[HERE: In modelAE/BSP_AE] changing dataset voxels from h5py dataset to numpy array. this could take a while.')
-            self.data_voxels = np.array(data_dict['voxels']) # [:] at the end means to turn the hdf5 data format to numpy arrays.
+            self.data_voxels = np.array(self.data_dict['voxels']) # [:] at the end means to turn the hdf5 data format to numpy arrays.
             print('[HERE: In modelAE/BSP_AE] dataset voxels are now numpy array.')
             print('[HERE: In modelAE/BSP_AE] self.data_voxels info:')
             print('[HERE: In modelAE/BSP_AE] | type: ', type(self.data_voxels))
