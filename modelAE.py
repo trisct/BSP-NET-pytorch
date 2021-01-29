@@ -37,20 +37,20 @@ class generator(nn.Module):
         self.concave_layer_weights = nn.Parameter(concave_layer_weights)
         nn.init.normal_(self.convex_layer_weights, mean=0.0, std=0.02)
         nn.init.normal_(self.concave_layer_weights, mean=1e-5, std=0.02)
-        print('[HERE" In modelAE/generator.init] p_dim:', self.p_dim)
-        print('[HERE" In modelAE/generator.init] c_dim:', self.c_dim)
-        print('[HERE" In modelAE/generator.init] convex_layer_weights:', self.convex_layer_weights.shape)
-        print('[HERE" In modelAE/generator.init] concave_layer_weights:', self.concave_layer_weights.shape)
+        #print('[HERE" In modelAE/generator.init] p_dim:', self.p_dim)
+        #print('[HERE" In modelAE/generator.init] c_dim:', self.c_dim)
+        #print('[HERE" In modelAE/generator.init] convex_layer_weights:', self.convex_layer_weights.shape)
+        #print('[HERE" In modelAE/generator.init] concave_layer_weights:', self.concave_layer_weights.shape)
 
     def forward(self, points, plane_m, is_training=False):
         if self.phase==0:
-            print('[HERE" In modelAE/generator] phase = %d' % self.phase)
-            print('[HERE" In modelAE/generator] points.shape =', points.shape)
-            print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
+            #print('[HERE" In modelAE/generator] phase = %d' % self.phase)
+            #print('[HERE" In modelAE/generator] points.shape =', points.shape)
+            #print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
             #level 1
             h1 = torch.matmul(points, plane_m)
             h1 = torch.clamp(h1, min=0)
-            print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
+            #print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
 
             #level 2
             h2 = torch.matmul(h1, self.convex_layer_weights)
@@ -60,49 +60,49 @@ class generator(nn.Module):
             h3 = torch.matmul(h2, self.concave_layer_weights)
             h3 = torch.clamp(h3, min=0, max=1)
 
-            print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
-            print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
+            #print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
+            #print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
 
             return h2,h3
         elif self.phase==1 or self.phase==2:
-            print('[HERE" In modelAE/generator] phase = %d' % self.phase)
-            print('[HERE" In modelAE/generator] points.shape =', points.shape)
-            print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
+            #print('[HERE" In modelAE/generator] phase = %d' % self.phase)
+            #print('[HERE" In modelAE/generator] points.shape =', points.shape)
+            #print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
             #level 1
             h1 = torch.matmul(points, plane_m)
             h1 = torch.clamp(h1, min=0)
-            print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
+            #print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
 
             #level 2
             h2 = torch.matmul(h1, (self.convex_layer_weights>0.01).float())
 
             #level 3
             h3 = torch.min(h2, dim=2, keepdim=True)[0]
-            print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
-            print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
+            #print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
+            #print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
 
             return h2,h3
         elif self.phase==3:
-            print('[HERE" In modelAE/generator] phase = %d' % self.phase)
-            print('[HERE" In modelAE/generator] points.shape =', points.shape)
-            print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
+            #print('[HERE" In modelAE/generator] phase = %d' % self.phase)
+            #print('[HERE" In modelAE/generator] points.shape =', points.shape)
+            #print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
             #level 1
             h1 = torch.matmul(points, plane_m)
             h1 = torch.clamp(h1, min=0)
-            print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
+            #print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
 
             #level 2
             h2 = torch.matmul(h1, self.convex_layer_weights)
 
             #level 3
             h3 = torch.min(h2, dim=2, keepdim=True)[0]
-            print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
-            print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
+            #print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
+            #print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
 
             return h2,h3
         else:
-            print("Congrats you got an error!")
-            print("generator.phase should be in [0,1,2,3], got", self.phase)
+            #print("Congrats you got an error!")
+            #print("generator.phase should be in [0,1,2,3], got", self.phase)
             exit(0)
 
 class encoder(nn.Module):
@@ -128,7 +128,7 @@ class encoder(nn.Module):
         #print('[HERE" In modelAE/encoder.init] ef_dim:', self.ef_dim)
         
     def forward(self, inputs, is_training=False):
-        print('[HERE" In modelAE/encoder] input shape:', inputs.shape)
+        #print('[HERE" In modelAE/encoder] input shape:', inputs.shape)
         d_1 = self.conv_1(inputs)
         d_1 = F.leaky_relu(d_1, negative_slope=0.01, inplace=True)
 
@@ -145,7 +145,7 @@ class encoder(nn.Module):
         d_5 = d_5.view(-1, self.ef_dim*8)
         d_5 = torch.sigmoid(d_5)
 
-        print('[HERE" In modelAE/encoder] output shape:', d_5.shape)
+        #print('[HERE" In modelAE/encoder] output shape:', d_5.shape)
         return d_5
 
 class decoder(nn.Module):
@@ -169,7 +169,7 @@ class decoder(nn.Module):
         print('[HERE" In modelAE/decoder.init] p_dim = %d' % self.p_dim)
 
     def forward(self, inputs, is_training=False):
-        print('[HERE" In modelAE/decoder] input shape:', inputs.shape)
+        #print('[HERE" In modelAE/decoder] input shape:', inputs.shape)
         l1 = self.linear_1(inputs)
         l1 = F.leaky_relu(l1, negative_slope=0.01, inplace=True)
 
@@ -182,7 +182,7 @@ class decoder(nn.Module):
         l4 = self.linear_4(l3)
         l4 = l4.view(-1, 4, self.p_dim)
 
-        print('[HERE" In modelAE/decoder] output shape:', l4.shape)
+        #print('[HERE" In modelAE/decoder] output shape:', l4.shape)
 
         return l4
 
@@ -268,7 +268,7 @@ class BSP_AE(object):
             print('[HERE: In modelAE/BSP_AE] data loading done')
             print('[HERE: In modelAE/BSP_AE] data_dict keys:', data_dict.keys())
 
-            print('[HERE: In modelAE.BSP_AR] data_dict[\'pixels\']:', data_dict['pixels'])
+            #print('[HERE: In modelAE.BSP_AR] data_dict[\'pixels\']:', data_dict['pixels'])
             print('[HERE: In modelAE.BSP_AR] data_dict[\'points_16\']:', data_dict['points_16'])
             print('[HERE: In modelAE.BSP_AR] data_dict[\'points_32\']:', data_dict['points_32'])
             print('[HERE: In modelAE.BSP_AR] data_dict[\'points_64\']:', data_dict['points_64'])
@@ -277,9 +277,9 @@ class BSP_AE(object):
             print('[HERE: In modelAE.BSP_AR] data_dict[\'values_64\']:', data_dict['values_64'])
             print('[HERE: In modelAE.BSP_AR] data_dict[\'voxels\']:', data_dict['voxels'])
 
-            print('[HERE: In modelAE.BSP_AR] data_dict[\'points_16\']:', np.array(data_dict['pixels']))
-            print('[HERE: In modelAE.BSP_AR] data_dict[\'values_16\']:', np.array(data_dict['pixels']))
-            print('[HERE: In modelAE.BSP_AR] data_dict[\'voxels\']:', np.array(data_dict['voxels']))
+            #print('[HERE: In modelAE.BSP_AR] data_dict[\'points_16\']:', np.array(data_dict['pixels']))
+            #print('[HERE: In modelAE.BSP_AR] data_dict[\'values_16\']:', np.array(data_dict['pixels']))
+            #print('[HERE: In modelAE.BSP_AR] data_dict[\'voxels\']:', np.array(data_dict['voxels']))
 
             print('[HERE: In modelAE/BSP_AE] data preprocessing starts')
             print('[HERE: In modelAE/BSP_AE] data_points normalization starts')
@@ -288,7 +288,7 @@ class BSP_AE(object):
             print('[HERE: In modelAE/BSP_AE] data_dict[\'points_%s\'] info:' % str(self.sample_vox_size))
             print('[HERE: In modelAE/BSP_AE] | type:', type(self.data_points))
             print('[HERE: In modelAE/BSP_AE] | shape:', self.data_points.shape)
-            print('[HERE: In modelAE/BSP_AE] | content', self.data_points)
+            #print('[HERE: In modelAE/BSP_AE] | content', self.data_points)
 
             
             print('[HERE: In modelAE/BSP_AE] data_points concatenation starts. This turns to homogenous coordinates.')
@@ -304,7 +304,7 @@ class BSP_AE(object):
             print('[HERE: In modelAE/BSP_AE] data_values info:')
             print('[HERE: In modelAE/BSP_AE] | type:', type(self.data_values))
             print('[HERE: In modelAE/BSP_AE] | shape:', self.data_values.shape)
-            print('[HERE: In modelAE.BSP_AE] | content:', self.data_values)
+            #print('[HERE: In modelAE.BSP_AE] | content:', self.data_values)
 
             print('[HERE: In modelAE/BSP_AE] data_voxels load starts')
             print('[HERE: In modelAE/BSP_AE] data_dict[\'voxels\'] info:')
@@ -483,10 +483,10 @@ class BSP_AE(object):
             avg_num = 0
             for idx in range(batch_num):
                 dxb = batch_index_list[idx*self.shape_batch_size:(idx+1)*self.shape_batch_size]
-                print('[HERE: In modelAE/BSP_AE.train] dxb shape =', dxb.shape)
+                #print('[HERE: In modelAE/BSP_AE.train] dxb shape =', dxb.shape)
                 
                 batch_voxels = self.data_voxels[dxb].astype(np.float32)
-                print('[HERE: In modelAE/BSP_AE.train] batch_voxels shape =', batch_voxels.shape)
+                #print('[HERE: In modelAE/BSP_AE.train] batch_voxels shape =', batch_voxels.shape)
                 #print(batch_voxels[0])
 
                 voxels = batch_voxels[0,0]
@@ -510,10 +510,10 @@ class BSP_AE(object):
                     point_coord = self.data_points[dxb, which_batch*self.point_batch_size:(which_batch+1)*self.point_batch_size]
                     point_value = self.data_values[dxb, which_batch*self.point_batch_size:(which_batch+1)*self.point_batch_size]
 
-                print(point_coord)
-                print('[HERE: In modelAE/BSP_AE.train] point_batch_num = %d' % point_batch_num)
-                print('[HERE: In modelAE/BSP_AE.train] point_coord shape =', point_coord.shape)
-                print('[HERE: In modelAE/BSP_AE.train] point_value shape =', point_value.shape)
+                #print(point_coord)
+                #print('[HERE: In modelAE/BSP_AE.train] point_batch_num = %d' % point_batch_num)
+                #print('[HERE: In modelAE/BSP_AE.train] point_coord shape =', point_coord.shape)
+                #print('[HERE: In modelAE/BSP_AE.train] point_value shape =', point_value.shape)
 
                 # Reading data and putting them to device
                 batch_voxels = torch.from_numpy(batch_voxels).to(self.device)
