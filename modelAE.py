@@ -25,85 +25,6 @@ from utils import *
 #pytorch 1.2.0 implementation
 
 
-class generator(nn.Module):
-    def __init__(self, phase, p_dim, c_dim):
-        super(generator, self).__init__()
-        self.phase = phase
-        self.p_dim = p_dim
-        self.c_dim = c_dim
-        convex_layer_weights = torch.zeros((self.p_dim, self.c_dim))
-        concave_layer_weights = torch.zeros((self.c_dim, 1))
-        self.convex_layer_weights = nn.Parameter(convex_layer_weights)
-        self.concave_layer_weights = nn.Parameter(concave_layer_weights)
-        nn.init.normal_(self.convex_layer_weights, mean=0.0, std=0.02)
-        nn.init.normal_(self.concave_layer_weights, mean=1e-5, std=0.02)
-        #print('[HERE" In modelAE/generator.init] p_dim:', self.p_dim)
-        #print('[HERE" In modelAE/generator.init] c_dim:', self.c_dim)
-        #print('[HERE" In modelAE/generator.init] convex_layer_weights:', self.convex_layer_weights.shape)
-        #print('[HERE" In modelAE/generator.init] concave_layer_weights:', self.concave_layer_weights.shape)
-
-    def forward(self, points, plane_m, is_training=False):
-        if self.phase==0:
-            #print('[HERE" In modelAE/generator] phase = %d' % self.phase)
-            #print('[HERE" In modelAE/generator] points.shape =', points.shape)
-            #print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
-            #level 1
-            h1 = torch.matmul(points, plane_m)
-            h1 = torch.clamp(h1, min=0)
-            #print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
-
-            #level 2
-            h2 = torch.matmul(h1, self.convex_layer_weights)
-            h2 = torch.clamp(1-h2, min=0, max=1)
-
-            #level 3
-            h3 = torch.matmul(h2, self.concave_layer_weights)
-            h3 = torch.clamp(h3, min=0, max=1)
-
-            #print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
-            #print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
-
-            return h2,h3
-        elif self.phase==1 or self.phase==2:
-            #print('[HERE" In modelAE/generator] phase = %d' % self.phase)
-            #print('[HERE" In modelAE/generator] points.shape =', points.shape)
-            #print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
-            #level 1
-            h1 = torch.matmul(points, plane_m)
-            h1 = torch.clamp(h1, min=0)
-            #print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
-
-            #level 2
-            h2 = torch.matmul(h1, (self.convex_layer_weights>0.01).float())
-
-            #level 3
-            h3 = torch.min(h2, dim=2, keepdim=True)[0]
-            #print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
-            #print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
-
-            return h2,h3
-        elif self.phase==3:
-            #print('[HERE" In modelAE/generator] phase = %d' % self.phase)
-            #print('[HERE" In modelAE/generator] points.shape =', points.shape)
-            #print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
-            #level 1
-            h1 = torch.matmul(points, plane_m)
-            h1 = torch.clamp(h1, min=0)
-            #print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
-
-            #level 2
-            h2 = torch.matmul(h1, self.convex_layer_weights)
-
-            #level 3
-            h3 = torch.min(h2, dim=2, keepdim=True)[0]
-            #print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
-            #print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
-
-            return h2,h3
-        else:
-            #print("Congrats you got an error!")
-            #print("generator.phase should be in [0,1,2,3], got", self.phase)
-            exit(0)
 
 class encoder(nn.Module):
     def __init__(self, ef_dim):
@@ -185,6 +106,86 @@ class decoder(nn.Module):
         #print('[HERE" In modelAE/decoder] output shape:', l4.shape)
 
         return l4
+
+class generator(nn.Module):
+    def __init__(self, phase, p_dim, c_dim):
+        super(generator, self).__init__()
+        self.phase = phase
+        self.p_dim = p_dim
+        self.c_dim = c_dim
+        convex_layer_weights = torch.zeros((self.p_dim, self.c_dim))
+        concave_layer_weights = torch.zeros((self.c_dim, 1))
+        self.convex_layer_weights = nn.Parameter(convex_layer_weights)
+        self.concave_layer_weights = nn.Parameter(concave_layer_weights)
+        nn.init.normal_(self.convex_layer_weights, mean=0.0, std=0.02)
+        nn.init.normal_(self.concave_layer_weights, mean=1e-5, std=0.02)
+        #print('[HERE" In modelAE/generator.init] p_dim:', self.p_dim)
+        #print('[HERE" In modelAE/generator.init] c_dim:', self.c_dim)
+        #print('[HERE" In modelAE/generator.init] convex_layer_weights:', self.convex_layer_weights.shape)
+        #print('[HERE" In modelAE/generator.init] concave_layer_weights:', self.concave_layer_weights.shape)
+
+    def forward(self, points, plane_m, is_training=False):
+        if self.phase==0:
+            #print('[HERE" In modelAE/generator] phase = %d' % self.phase)
+            #print('[HERE" In modelAE/generator] points.shape =', points.shape)
+            #print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
+            #level 1
+            h1 = torch.matmul(points, plane_m)
+            h1 = torch.clamp(h1, min=0)
+            #print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
+
+            #level 2
+            h2 = torch.matmul(h1, self.convex_layer_weights)
+            h2 = torch.clamp(1-h2, min=0, max=1)
+
+            #level 3
+            h3 = torch.matmul(h2, self.concave_layer_weights)
+            h3 = torch.clamp(h3, min=0, max=1)
+
+            #print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
+            #print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
+
+            return h2,h3
+        elif self.phase==1 or self.phase==2:
+            #print('[HERE" In modelAE/generator] phase = %d' % self.phase)
+            #print('[HERE" In modelAE/generator] points.shape =', points.shape)
+            #print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
+            #level 1
+            h1 = torch.matmul(points, plane_m)
+            h1 = torch.clamp(h1, min=0)
+            #print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
+
+            #level 2
+            h2 = torch.matmul(h1, (self.convex_layer_weights>0.01).float())
+
+            #level 3
+            h3 = torch.min(h2, dim=2, keepdim=True)[0]
+            #print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
+            #print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
+
+            return h2,h3
+        elif self.phase==3:
+            #print('[HERE" In modelAE/generator] phase = %d' % self.phase)
+            #print('[HERE" In modelAE/generator] points.shape =', points.shape)
+            #print('[HERE" In modelAE/generator] plane_m.shape =', plane_m.shape)
+            #level 1
+            h1 = torch.matmul(points, plane_m)
+            h1 = torch.clamp(h1, min=0)
+            #print('[HERE" In modelAE/generator] h1.shape =', h1.shape)
+
+            #level 2
+            h2 = torch.matmul(h1, self.convex_layer_weights)
+
+            #level 3
+            h3 = torch.min(h2, dim=2, keepdim=True)[0]
+            #print('[HERE" In modelAE/generator] h2.shape =', h2.shape)
+            #print('[HERE" In modelAE/generator] h3.shape =', h3.shape)
+
+            return h2,h3
+        else:
+            #print("Congrats you got an error!")
+            #print("generator.phase should be in [0,1,2,3], got", self.phase)
+            exit(0)
 
 class bsp_network(nn.Module):
     def __init__(self, phase, ef_dim, p_dim, c_dim):
@@ -405,9 +406,10 @@ class BSP_AE(object):
             #cw3 - auxiliary weights W
             def network_loss(G2,G,point_value,cw2,cw3):
                 loss_sp = torch.mean((point_value - G)**2)
-                torch.clamp(cw2-1, min=0)
-                loss = loss_sp + torch.sum(torch.abs(cw3-1)) + (torch.sum(torch.clamp(cw2-1, min=0) - torch.clamp(cw2, max=0)))
-                return loss_sp,loss
+                loss_convex = (torch.sum(torch.clamp(cw2-1, min=0) - torch.clamp(cw2, max=0)))
+                loss_concave = torch.sum(torch.abs(cw3-1))
+                loss = loss_sp + loss_convex + loss_concave
+                return loss_sp, loss_convex, loss_concave, loss
             self.loss = network_loss
         elif config.phase==1:
             #phase 1 hard discrete for bsp
@@ -495,12 +497,12 @@ class BSP_AE(object):
                 colors = np.empty(voxels.shape, dtype=object)
                 colors = 'blue'
                 
-                fig = plt.figure()
-                ax = fig.gca(projection='3d')
-                ax.voxels(voxels, facecolors=colors, edgecolor='k')
+                #fig = plt.figure()
+                #ax = fig.gca(projection='3d')
+                #ax.voxels(voxels, facecolors=colors, edgecolor='k')
 
-                plt.show()
-                fig.clear()
+                #plt.show()
+                #fig.clear()
 
                 if point_batch_num==1:
                     point_coord = self.data_points[dxb]
@@ -523,15 +525,27 @@ class BSP_AE(object):
 
                 self.bsp_network.zero_grad()
                 _, _, net_out_convexes, net_out = self.bsp_network(batch_voxels, None, None, point_coord, is_training=True)
-                errSP, errTT = self.loss(net_out_convexes, net_out, point_value, self.bsp_network.generator.convex_layer_weights, self.bsp_network.generator.concave_layer_weights)
+                losses = self.loss(net_out_convexes, net_out, point_value, self.bsp_network.generator.convex_layer_weights, self.bsp_network.generator.concave_layer_weights)
 
+                # errSP: space partitioning loss
+                # errT: convex connection layer loss T
+                # errW: concave connection layer loss T
+                # errTT: total loss
+                if len(losses) == 4:
+                    errSP, errT, errW, errTT = losses
+                else:
+                    errSP, errTT = losses
                 errTT.backward()
                 self.optimizer.step()
 
                 avg_loss_sp += errSP.item()
                 avg_loss_tt += errTT.item()
                 avg_num += 1
-                print(str(self.sample_vox_size) + " Step %d/%d of epoch %d"%(idx, batch_num, epoch))
+
+                if len(losses) == 4:
+                    print(str(self.sample_vox_size) + " Epoch: [%2d/%2d], step %d/%d: loss_sp: %.6f, loss_T: %.6g, loss_W: %.6g, loss_total: %.6f"%(epoch, training_epoch, idx, batch_num, errSP.item(), errT.item(), errW.item(), errTT.item()))
+                else:
+                    print(str(self.sample_vox_size) + " Epoch: [%2d/%2d], step %d/%d: loss_sp: %.6f, loss_total: %.6f"%(epoch, training_epoch, idx, batch_num, errSP.item(), errTT.item()))
             print(str(self.sample_vox_size) + " Epoch: [%2d/%2d] time: %4.4f, loss_sp: %.6f, loss_total: %.6f" % (epoch, training_epoch, time.time() - start_time, avg_loss_sp/avg_num, avg_loss_tt/avg_num))
             if epoch%10==9:
                 self.test_1(config,"train_"+str(self.sample_vox_size)+"_"+str(epoch))
