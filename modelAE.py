@@ -246,9 +246,10 @@ class BSP_AE(object):
         self.c_dim = 256
 
         self.dataset_name = config.dataset
-        self.dataset_load = self.dataset_name + '_train'
+        self.dataset_id = self.dataset_name.split('_')[0]
+        self.dataset_load = self.dataset_id + '_vox256_img_train'
         if not (config.train or config.getz):
-            self.dataset_load = self.dataset_name + '_test'
+            self.dataset_load = self.dataset_id + '_vox256_img_test'
         self.checkpoint_dir = config.checkpoint_dir
         self.data_dir = config.data_dir
         
